@@ -7,32 +7,14 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 passport.use(new FacebookStrategy({
         clientID: '1768515096768793',
         clientSecret: 'd24b812a9423b18a25a121a952afa14b',
-        callbackURL: "http://localhost:3000/users/auth/facebook/callback"
+        callbackURL: "http://localhost:3000/"
     },
     function(accessToken, refreshToken, profile, done) {
         //TODO: register new user
         console.log("Facebook login requested. profile: " + profile.displayName);
+
         })
 );
-
-router.post('/login',
-    passport.authenticate('local'),
-    function(req, res) {
-        // If this function gets called, authentication was successful.
-        // `req.user` contains the authenticated user.
-        res.redirect('/users/' + req.user.username);
-    });
-
-router.get('/logout', function(req, res) {
-    var userName = req.get('username');
-    console.log('logout requested by:  ' + userName);
-    if(connector.userExists(userName)){
-        res.send('Logout successful!');
-    }
-    else{
-        res.send('Logout failed!');
-    }
-});
 
 router.get('/register', function(req, res) {
     var userName = req.get('username');
@@ -51,7 +33,12 @@ router.get('/register', function(req, res) {
 // Redirect the user to Facebook for authentication.  When complete,
 // Facebook will redirect the user back to the application at
 //     /auth/facebook/callback
-router.get('/auth/facebook', passport.authenticate('facebook'));
+// router.get('/login', passport.authenticate('facebook'), {
+//     successRedirect: '/',
+//     failureRedirect: '/login?failedSocial=facebook'
+// });
+
+router.get('/login', passport.authenticate('facebook'));
 
 // Facebook will redirect the user to this URL after approval.  Finish the
 // authentication process by attempting to obtain an access token.  If
@@ -59,6 +46,6 @@ router.get('/auth/facebook', passport.authenticate('facebook'));
 // authentication has failed.
 router.get('/auth/facebook/callback',
     passport.authenticate('facebook', { successRedirect: '/',
-        failureRedirect: '/login' }));
+        failureRedirect: '/login?failedSocial=facebook' }));
 
 module.exports = router;
