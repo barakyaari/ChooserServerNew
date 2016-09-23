@@ -1,18 +1,18 @@
 var express = require('express');
 var router = express.Router();
-var connector = require('../modules/dbConnector.js');
+var connector = require('../modules/db.js');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 
 passport.use(new FacebookStrategy({
         clientID: '1768515096768793',
         clientSecret: 'd24b812a9423b18a25a121a952afa14b',
-        callbackURL: "http://localhost:3000/"
+        callbackURL: "http://localhost:3000/auth/facebook/callback"
     },
     function(accessToken, refreshToken, profile, done) {
         //TODO: register new user
         console.log("Facebook login requested. profile: " + profile.displayName);
-
+        connector.addUser(profile.displayName, profile.id, profile.emails[0].value)
         })
 );
 
