@@ -4,6 +4,7 @@ var connector = require('../modules/db.js');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 var BearerStrategy = require('passport-http-bearer');
+var facebookConnector = require('../modules/facebookconnector');
 
 
 passport.use(new FacebookStrategy({
@@ -161,18 +162,30 @@ router.post(
     '/login',
     function (req, res) {
         console.log('login request. token: %s, uid:%s', req.get('token'), req.get('userId'));
-        
-        connector.User.find({userId: req.userId}, function (err, docs) {
-                if (err) {
-                    console.error(err);
-                }
-                else {
-                    console.log(docs);
-                    res.send(docs);
-                }
+        var token = req.get('token');
+        var userId = req.get('userId');
+        if (!facebookConnector.isLegalToken(token, userId, function(isLegal){
+            if(isLegal) {
+                res.send('token is legal!');
             }
-        )
+            else{
+                res.send('token is not legal!');
+            }
+            })){
+        }
+    //     connector.User.find({userId: req.userId}, function (err, docs) {
+    //             if (err) {
+    //                 console.error(err);
+    //             }
+    //             else {
+    //                 console.log(docs);
+    //                 res.send(docs);
+    //             }
+    //         }
+    //     )
     }
 );
+
+
 
 module.exports = router;
