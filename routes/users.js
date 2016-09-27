@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var connector = require('../modules/db.js');
+var dbConnector = require('../modules/db.js');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
 var BearerStrategy = require('passport-http-bearer');
@@ -17,14 +17,14 @@ passport.use(new FacebookStrategy({
         console.log("Facebook login requested. profile: " + profile.displayName);
         console.log("Access token: %s", accessToken);
         console.log("Refresh token: %s", refreshToken);
-        connector.findOrCreateUser(profile, accessToken, done);
+        dbConnector.findOrCreateUser(profile, accessToken, done);
     })
 );
 
 passport.use(
     new BearerStrategy(
         function (token, done) {
-            connector.User.findOne({access_token: token},
+            dbConnector.User.findOne({access_token: token},
                 function (err, user) {
                     if (err) {
                         return done(err)
@@ -93,7 +93,7 @@ router.post(
 
         else {
             console.log('add post request: %s - %s', post.title, userId);
-            connector.addPost(post, userId)
+            dbConnector.addPost(post, userId);
             res.send('add post successful!');
         }
     }
@@ -107,7 +107,7 @@ router.get(
     function (req, res) {
         var postId = req.get('id');
 
-        connector.Post.findOneAndRemove({_id: postId}, function (err, docs) {
+        dbConnector.Post.findOneAndRemove({_id: postId}, function (err, docs) {
                 if (err) {
                     console.error(err);
                 }
@@ -121,17 +121,15 @@ router.get(
 );
 
 router.get(
-    '/getAllPosts',
-    passport.authenticate('bearer', {
-        session: false
-    }),
+    '/allPosts',
     function (req, res) {
-        connector.Post.find({}, function (err, docs) {
+        dbConnector.Post.find({}, function (err, docs) {
                 if (err) {
                     console.error(err);
                 }
                 else {
                     console.log(docs);
+                    console.log('sending all posts');
                     res.send(docs);
                 }
             }
@@ -145,7 +143,7 @@ router.get(
         session: false
     }),
     function (req, res) {
-        connector.Post.find({userId: req.user.providerId}, function (err, docs) {
+        dbConnector.Post.find({userId: req.user.providerId}, function (err, docs) {
                 if (err) {
                     console.error(err);
                 }
@@ -166,14 +164,16 @@ router.post(
         var userId = req.get('userId');
         if (!facebookConnector.isLegalToken(token, userId, function(isLegal){
             if(isLegal) {
-                res.send('token is legal!');
+                res.sendStatus(200);
+                dbConnector.updateUser(token);
             }
             else{
-                res.send('token is not legal!');
+                Console.log('Token is not legal');
+                res.sendStatus(403);
             }
             })){
         }
-    //     connector.User.find({userId: req.userId}, function (err, docs) {
+    //     dbConnector.User.find({userId: req.userId}, function (err, docs) {
     //             if (err) {
     //                 console.error(err);
     //             }
