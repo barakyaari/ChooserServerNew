@@ -42,6 +42,7 @@ var connector = {};
 
 connector.User = User;
 
+
 connector.updateUser = function (token) {
     fbconnector.getUserDetails(token, function (newUser) {
         User.findOne({
@@ -124,13 +125,13 @@ var postSchema = mongoose.Schema({
     title: {
         type: String
     },
-    url1: {
+    image1: {
         type: String
     },
     description1: {
         type: String
     },
-    url2: {
+    image2: {
         type: String
     },
     description2: {
@@ -146,10 +147,11 @@ var Post = mongoose.model('Post', postSchema);
 connector.Post = Post;
 
 connector.addPost = function (post, userId) {
+
     var newPost = new Post({
         title: post.title,
-        url1: post.url1,
-        url2: post.url2,
+        image1: post.image1,
+        image2: post.image2,
         description1: post.description1,
         description2: post.description2,
         userId: userId
@@ -158,5 +160,8 @@ connector.addPost = function (post, userId) {
     newPost.save();
 };
 
+connector.getPost = function(postId, cont){
+    Post.findOne({_id: postId})
+}
 
 module.exports = connector;

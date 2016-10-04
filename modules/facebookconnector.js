@@ -11,16 +11,18 @@ connector.isLegalToken = function (token, userId, cont) {
             console.log(!res ? 'error occurred' : res.error);
             cont(false);
         }
-        console.log('User: %s fb request recieved', res.name);
-
-        if (res.id == userId) {
-            console.log('Token is fine.')
-            cont(true);
-        }
-
         else {
-            console.log('Illegal token recieved!');
-            cont(false);
+            console.log('User: %s fb request recieved', res.name);
+
+            if (res.id == userId) {
+                console.log('Token is fine.')
+                cont(true);
+            }
+
+            else {
+                console.log('Illegal token recieved!');
+                cont(false);
+            }
         }
     });
 };

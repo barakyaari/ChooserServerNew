@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var connector = require('./modules/db.js');
 
 var routes = require('./routes/index');
-var users = require('./routes/users');
+var users = require('./routes/externalAPI');
 var posts = require('./routes/posts');
 
 

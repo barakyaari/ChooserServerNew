@@ -6,9 +6,9 @@ var connector = require('../modules/db.js');
 router.post('/addPost', function(req, res) {
 	var post = {};
 	post.title = req.get('title');
-	post.url1 = req.get('url1');
+	post.image1 = req.get('image1');
 	post.description1 = req.get('description1');
-	post.url2 = req.get('url2');
+	post.image2 = req.get('image2');
 	post.description2 = req.get('description2');
 
 	if(!post.title || !post.url1 || !post.url2){
