@@ -9,9 +9,6 @@ router.get('/', function(req, res, next) {
 });
 
 /* GET Hello World page. */
-router.get('/helloworld', function(req, res) {
-    res.render('helloworld', { title: 'Hello, World!' });
-});
 
 router.get('/collections',function(req,res){
     res.render(db);

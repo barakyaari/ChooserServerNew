@@ -1,5 +1,5 @@
-var fb = require('./facebookconnector');
-var db = require('./db');
+var fb = require('./../modules/facebookconnector');
+var db = require('./../modules/db');
 
 var methods = {};
 
