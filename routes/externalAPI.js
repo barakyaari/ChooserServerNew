@@ -2,8 +2,8 @@ var express = require('express');
 var router = express.Router();
 var dbConnector = require('../modules/db.js');
 var posts = require('../modules/posts.js');
-var postFetcher = require('../modules/postFetcher.js');
-var users = require('users.js');
+var postFetcher = require('../modules/posts.js');
+var users = require('../modules/users');
 
 router.get(
     '/addPost',

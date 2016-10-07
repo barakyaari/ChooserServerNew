@@ -10,7 +10,7 @@ methods.deleteImages = function(imagesToDelete){
     });
     cloudinary.api.delete_resources(imagesToDelete,
         function(result){
-        console.log("Cloudinary deleted: " + result.message);
+        console.log("Cloudinary deleted: " + imagesToDelete[0] + " - " + result.deleted[imagesToDelete[0]]);
         });
 };
 
