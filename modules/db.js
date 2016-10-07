@@ -139,6 +139,12 @@ var postSchema = mongoose.Schema({
     },
     userId: {
         type: String
+    },
+    votes1: {
+        type: Number
+    },
+    votes2: {
+        type: Number
     }
 });
 
@@ -154,7 +160,9 @@ connector.addPost = function (post, userId) {
         image2: post.image2,
         description1: post.description1,
         description2: post.description2,
-        userId: userId
+        userId: userId,
+        votes1: post.votes1,
+        votes2: post.votes2
     });
 
     newPost.save();

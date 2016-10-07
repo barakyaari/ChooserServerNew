@@ -36,7 +36,9 @@ methods.getMyPosts = function (req, res) {
 };
 
 methods.addPost = function (req, res) {
-        console.log("Add post recieved: " + req.get('title'));
+    console.log("Add post recieved: " + req.get('title'));
+    var token = req.get('token');
+    fb.getUserDetails(token, function (user) {
         var token = req.get('token');
         var post = {};
         post.title = req.get('title');
@@ -44,23 +46,26 @@ methods.addPost = function (req, res) {
         post.description1 = req.get('description1');
         post.image2 = req.get('image2');
         post.description2 = req.get('description2');
+        post.votes1 = req.get('votes1');
+        post.votes2 = req.get('votes2');
 
         if (!post.title || !post.image1 || !post.image2) {
             console.log('add post request with missing parameters');
             res.send('add post failed!');
         }
         else {
-            posts.addPost(post, token);
+            db.addPost(post, user.providerId);
             res.send('add post successful!');
         }
-    };
+    });
+};
 
 methods.deletePost = function (req, res) {
     var accessToken = req.get('token');
     var postId = req.get('postId');
     fb.getUserDetails(accessToken, function (user) {
         db.Post.findOneAndRemove({_id: postId}, function (err, post) {
-            if(!post){
+            if (!post) {
                 console.log("Post to delete not found!");
                 res.statusCode = 500;
                 return res.json({status: "Post Not Found"});
@@ -72,5 +77,39 @@ methods.deletePost = function (req, res) {
         });
     });
 };
+
+methods.vote = function (req, res) {
+    var accessToken = req.get('token');
+    var postId = req.get('postId');
+    var vote = req.get('vote');
+    var key = "votes" + vote;
+    console.log("Key: " + key);
+    fb.getUserDetails(accessToken, function (user) {
+            if (vote == 1) {
+                db.Post.findByIdAndUpdate(postId, {$inc: {votes1: 1}}, function (err, post) {
+                    if (!post) {
+                        console.log("Post not found!");
+                        res.statusCode = 500;
+                        return res.json({status: "Post Not Found"});
+                    }
+                    console.log("Vote accepted: " + post.title);
+                    return res.json({status: "OK"});
+                });
+            }
+            if (vote == 2) {
+                db.Post.findByIdAndUpdate(postId, {$inc: {votes2: 1}}, function (err, post) {
+                    if (!post) {
+                        console.log("Post not found!");
+                        res.statusCode = 500;
+                        return res.json({status: "Post Not Found"});
+                    }
+                    console.log("Vote accepted: " + post.title);
+                    return res.json({status: "OK"});
+                });
+            }
+        }
+    );
+};
+
 
 module.exports = methods;
