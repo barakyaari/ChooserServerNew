@@ -81,9 +81,7 @@ methods.deletePost = function (req, res) {
 methods.vote = function (req, res) {
     var accessToken = req.get('token');
     var postId = req.get('postId');
-    var vote = req.get('vote');
-    var key = "votes" + vote;
-    console.log("Key: " + key);
+    var vote = req.get('selected');
     fb.getUserDetails(accessToken, function (user) {
             if (vote == 1) {
                 db.Post.findByIdAndUpdate(postId, {$inc: {votes1: 1}}, function (err, post) {

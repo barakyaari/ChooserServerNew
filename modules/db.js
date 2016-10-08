@@ -36,91 +36,6 @@ var userSchema = mongoose.Schema({
     }
 });
 
-var User = mongoose.model('User', userSchema);
-
-var connector = {};
-
-connector.User = User;
-
-
-connector.updateUser = function (token) {
-    fbconnector.getUserDetails(token, function (newUser) {
-        User.findOne({
-            providerId: newUser.providerId
-        }, function (err, user) {
-            if (err) {
-                return done(err);
-            }
-            if (!user) {
-                user = new User({
-                    firstName: newUser.firstName,
-                    lastName: newUser.lastName,
-                    access_token: token,
-                    gender: newUser.gender,
-                    birthday: newUser.birthday,
-                    providerId: newUser.providerId,
-                    email: newUser.email,
-
-                });
-
-                console.log(user.firstName);
-                user.save(function (err, user) {
-                    if (err)
-                        return console.error(err);
-                    console.log('user: %s added', user.firstName);
-                })
-            }
-            else {//User exists
-                if (user.access_token != token) {
-                    user.access_token = token;
-                    user.save();
-                    console.log('access token updated: %s', token);
-                }
-                console.log("Welcome back: %s", newUser.firstName);
-            }
-        });
-    });
-};
-
-connector.findOrCreateUser = function (newUser, accessToken, done) {
-    User.findOne({
-            providerId: user.providerId
-        }, function (err, user) {
-            if (err) {
-                return done(err);
-            }
-            if (!user) {
-                user = new User({
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    access_token: accessToken,
-                    gender: user.gender,
-                    birthdate: user.birthdate,
-                    providerId: user.id,
-                    email: user.email,
-
-                });
-
-                console.log(user.name);
-                user.save(function (err, user) {
-                    if (err)
-                        return console.error(err);
-                    console.log('user: %s added', user.name);
-                })
-            }
-            else {//User exists
-                if (user.access_token != accessToken) {
-                    user.access_token = accessToken;
-                    user.save();
-                    console.log('access token updated: %s', accessToken);
-                }
-                console.log("Welcome back: %s", user.name);
-            }
-            done(null, user);
-        }
-    )
-};
-
 var postSchema = mongoose.Schema({
     title: {
         type: String
@@ -148,6 +63,51 @@ var postSchema = mongoose.Schema({
     }
 });
 
+var User = mongoose.model('User', userSchema);
+
+var connector = {};
+
+connector.User = User;
+
+
+connector.updateUser = function (token) {
+    fbconnector.getUserDetails(token, function (newUser) {
+        User.findOne({
+            providerId: newUser.providerId
+        }, function (err, user) {
+            if (err) {
+                return done(err);
+            }
+            if (!user) {
+                user = new User({
+                    firstName: newUser.firstName,
+                    lastName: newUser.lastName,
+                    access_token: token,
+                    gender: newUser.gender,
+                    birthday: newUser.birthday,
+                    providerId: newUser.providerId,
+                    email: newUser.email
+                });
+
+                console.log(user.firstName);
+                user.save(function (err, user) {
+                    if (err)
+                        return console.error(err);
+                    console.log('user: %s added', user.firstName);
+                })
+            }
+            else {//User exists
+                if (user.access_token != token) {
+                    user.access_token = token;
+                    user.save();
+                    console.log('access token updated: %s', token);
+                }
+                console.log("Welcome back: %s", newUser.firstName);
+            }
+        });
+    });
+};
+
 var Post = mongoose.model('Post', postSchema);
 
 connector.Post = Post;
@@ -170,6 +130,6 @@ connector.addPost = function (post, userId) {
 
 connector.getPost = function(postId, cont){
     Post.findOne({_id: postId})
-}
+};
 
 module.exports = connector;
