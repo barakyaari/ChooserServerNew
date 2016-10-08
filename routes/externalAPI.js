@@ -22,7 +22,7 @@ router.get(
 router.get(
     '/allPosts',
     function (req, res) {
-        postFetcher.getNewPosts(req, res);
+        postFetcher.getPosts(req, res);
     }
 );
 

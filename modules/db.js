@@ -60,7 +60,14 @@ var postSchema = mongoose.Schema({
     },
     votes2: {
         type: Number
-    }
+    },
+    votedBy: [
+        {
+            userId: String,
+            vote: Number
+        }
+    ]
+
 });
 
 var User = mongoose.model('User', userSchema);
@@ -68,7 +75,6 @@ var User = mongoose.model('User', userSchema);
 var connector = {};
 
 connector.User = User;
-
 
 connector.updateUser = function (token) {
     fbconnector.getUserDetails(token, function (newUser) {
@@ -122,14 +128,67 @@ connector.addPost = function (post, userId) {
         description2: post.description2,
         userId: userId,
         votes1: post.votes1,
-        votes2: post.votes2
+        votes2: post.votes2,
+        votedBy: []
     });
 
     newPost.save();
 };
 
-connector.getPost = function(postId, cont){
-    Post.findOne({_id: postId})
+connector.addUserVote = function (userId, postId, vote, cont) {
+    console.log("Adding user vote: " + postId);
+    if (vote == 1) {
+        Post.findByIdAndUpdate(postId,
+            {
+                $inc: {votes1: 1},
+                $push: {
+                    votedBy: {
+                        userId: userId,
+                        vote: vote
+                    }
+                }
+            },
+            function (err) {
+                if (err) {
+                    console.log("Post not found");
+                    cont(false);
+                }
+                else {
+                    cont(true);
+                }
+            });
+    }
+    else if (vote == 2) {
+        Post.findByIdAndUpdate(postId,
+            {
+                $inc: {votes1: 1},
+                $push: {
+                    $push: {
+                        votedBy: userId
+                    }
+                }
+            },
+            function (err) {
+                if (err) {
+                    console.log("Post not found");
+                    cont(false);
+                }
+                else {
+                    cont(true);
+                }
+            }
+        );
+    }
+};
+
+connector.getPosts = function (userId, cont) {
+    console.log("Getting posts, userId: " + userId);
+    Post.find(
+        {
+        }
+        , function (err, docs) {
+            cont(err, docs);
+        })
 };
 
 module.exports = connector;

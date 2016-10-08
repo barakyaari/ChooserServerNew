@@ -3,11 +3,12 @@ var db = require('./db.js');
 var cloudinary = require('./cloudinaryConnector.js');
 
 var methods = {};
-methods.getNewPosts = function (req, res) {
+
+methods.getPosts = function (req, res) {
     var token = req.get('token');
     fb.getUserDetails(token, function (user) {
         var userId = user.providerId;
-        db.Post.find({userId: {'$ne': userId}}, function (err, docs) {
+        db.getPosts(userId, function(err, docs){
             if (err) {
                 console.error(err);
             }
@@ -15,7 +16,7 @@ methods.getNewPosts = function (req, res) {
                 console.log(docs);
                 res.send(docs);
             }
-        })
+        });
     })
 };
 
@@ -48,6 +49,7 @@ methods.addPost = function (req, res) {
         post.description2 = req.get('description2');
         post.votes1 = req.get('votes1');
         post.votes2 = req.get('votes2');
+        post.usersVotes = [];
 
         if (!post.title || !post.image1 || !post.image2) {
             console.log('add post request with missing parameters');
@@ -83,31 +85,21 @@ methods.vote = function (req, res) {
     var postId = req.get('postId');
     var vote = req.get('selected');
     fb.getUserDetails(accessToken, function (user) {
-            if (vote == 1) {
-                db.Post.findByIdAndUpdate(postId, {$inc: {votes1: 1}}, function (err, post) {
-                    if (!post) {
-                        console.log("Post not found!");
-                        res.statusCode = 500;
-                        return res.json({status: "Post Not Found"});
-                    }
-                    console.log("Vote accepted: " + post.title);
+            var userId = user.providerId;
+            db.addUserVote(userId, postId, vote, function(success){
+                if(!success){
+                    console.log("Post not found!");
+                    res.statusCode = 500;
+                    return res.json({status: "Post Not Found"});
+                }
+                else{
+                    console.log("Vote accepted");
                     return res.json({status: "OK"});
-                });
-            }
-            if (vote == 2) {
-                db.Post.findByIdAndUpdate(postId, {$inc: {votes2: 1}}, function (err, post) {
-                    if (!post) {
-                        console.log("Post not found!");
-                        res.statusCode = 500;
-                        return res.json({status: "Post Not Found"});
-                    }
-                    console.log("Vote accepted: " + post.title);
-                    return res.json({status: "OK"});
-                });
-            }
+
+                }
+            });
         }
     );
 };
-
 
 module.exports = methods;
