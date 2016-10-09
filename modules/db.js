@@ -184,11 +184,35 @@ connector.addUserVote = function (userId, postId, vote, cont) {
 connector.getPosts = function (userId, cont) {
     console.log("Getting posts, userId: " + userId);
     Post.find(
-        {
-        }
+        {'userId': {$ne: userId }}
         , function (err, docs) {
-            cont(err, docs);
+            var filteredDocs = filterUserVotedPosts(userId, docs);
+            cont(err, filteredDocs);
         })
+};
+
+//TODO: Find a MongoDB way to filter this in the query itself.
+filterUserVotedPosts = function(userId, docs){
+    var filteredPosts = [];
+    var found = false;
+    for(var index in docs){
+        var post = docs[index];
+        console.log("Checking: " + post.title);
+        var votedBy = post.votedBy;
+        for(var i = 0; i < post.votedBy.length; i++){
+            var voter = post.votedBy[i];
+            if(voter.userId == userId){
+                found = true;
+                console.log("Filtering: " + post.title);
+                break;
+            }
+        }
+        if(!found){
+            filteredPosts.push(post);
+        }
+        found = false;
+    }
+    return filteredPosts;
 };
 
 module.exports = connector;
