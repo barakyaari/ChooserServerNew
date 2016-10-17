@@ -67,7 +67,7 @@ var postSchema = mongoose.Schema({
             vote: Number
         }
     ],
-    date: {
+    utcDate: {
         type: Date,
         default: Date.now
     }
