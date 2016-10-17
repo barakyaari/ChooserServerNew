@@ -163,8 +163,9 @@ connector.addUserVote = function (userId, postId, vote, cont) {
             {
                 $inc: {votes2: 1},
                 $push: {
-                    $push: {
-                        votedBy: userId
+                    votedBy: {
+                        userId: userId,
+                        vote: vote
                     }
                 }
             },
