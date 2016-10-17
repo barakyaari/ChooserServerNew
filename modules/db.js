@@ -161,7 +161,7 @@ connector.addUserVote = function (userId, postId, vote, cont) {
     else if (vote == 2) {
         Post.findByIdAndUpdate(postId,
             {
-                $inc: {votes1: 1},
+                $inc: {votes2: 1},
                 $push: {
                     $push: {
                         votedBy: userId
