@@ -66,8 +66,11 @@ var postSchema = mongoose.Schema({
             userId: String,
             vote: Number
         }
-    ]
-
+    ],
+    date: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 var User = mongoose.model('User', userSchema);
@@ -129,7 +132,8 @@ connector.addPost = function (post, userId) {
         userId: userId,
         votes1: post.votes1,
         votes2: post.votes2,
-        votedBy: []
+        votedBy: [],
+        utcDate: Date.now
     });
 
     newPost.save();
