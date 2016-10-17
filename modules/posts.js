@@ -39,8 +39,8 @@ methods.getMyPosts = function (req, res) {
 methods.addPost = function (req, res) {
     console.log("Add post recieved: " + req.get('title'));
     var token = req.get('token');
-    fb.getUserDetails(token, function (user) {
-        var token = req.get('token');
+
+    if(token == "NotMyPost"){
         var post = {};
         post.title = req.get('title');
         post.image1 = req.get('image1');
@@ -56,10 +56,37 @@ methods.addPost = function (req, res) {
             res.send('add post failed!');
         }
         else {
-            db.addPost(post, user.providerId);
-            res.send('add post successful!');
+            db.addPost(post, "NotMyPost");
+            console.log("Post Added");
+            return res.json({status: "OK"});
         }
-    });
+    }
+
+    else {
+
+        fb.getUserDetails(token, function (user) {
+            var token = req.get('token');
+            var post = {};
+            post.title = req.get('title');
+            post.image1 = req.get('image1');
+            post.description1 = req.get('description1');
+            post.image2 = req.get('image2');
+            post.description2 = req.get('description2');
+            post.votes1 = req.get('votes1');
+            post.votes2 = req.get('votes2');
+            post.usersVotes = [];
+
+            if (!post.title || !post.image1 || !post.image2) {
+                console.log('add post request with missing parameters');
+                res.send('add post failed!');
+            }
+            else {
+                db.addPost(post, user.providerId);
+                console.log("Post Added");
+                return res.json({status: "OK"});
+            }
+        });
+    }
 };
 
 methods.deletePost = function (req, res) {
