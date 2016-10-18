@@ -50,6 +50,7 @@ methods.addPost = function (req, res) {
         post.votes1 = req.get('votes1');
         post.votes2 = req.get('votes2');
         post.usersVotes = [];
+        post.utcDate = Date.now();
 
         if (!post.title || !post.image1 || !post.image2) {
             console.log('add post request with missing parameters');
@@ -75,6 +76,8 @@ methods.addPost = function (req, res) {
             post.votes1 = req.get('votes1');
             post.votes2 = req.get('votes2');
             post.usersVotes = [];
+            post.utcDate = Date.now();
+
 
             if (!post.title || !post.image1 || !post.image2) {
                 console.log('add post request with missing parameters');

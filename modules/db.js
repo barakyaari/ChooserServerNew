@@ -68,8 +68,7 @@ var postSchema = mongoose.Schema({
         }
     ],
     utcDate: {
-        type: Date,
-        default: Date.now
+        type: Date
     }
 });
 
