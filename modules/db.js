@@ -132,7 +132,7 @@ connector.addPost = function (post, userId) {
         votes1: post.votes1,
         votes2: post.votes2,
         votedBy: [],
-        utcDate: Date.now
+        utcDate: post.utcDate
     });
 
     newPost.save();
