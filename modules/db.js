@@ -1,5 +1,5 @@
-const mongoConnString = 'mongodb://chooser:bTrCZbmOliWFXu7TjHEpptUavLESGW516rklKahEisg0Y4FqnQraopE4UkLVFlHzN8zdYxF05CB40t6d4OCYlA==@chooser.documents.azure.com:10250/ChooserDB/?ssl=true';
-const url = 'localhost:27017';
+const mongoConnString = 'mongodb://chooser:Nsghvnjac1@ds059375.mlab.com:59375/chooserdb';
+// const url = 'localhost:27017';
 var fbconnector = require('./facebookconnector.js');
 
 var mongoose = require('mongoose');
@@ -64,7 +64,9 @@ var postSchema = mongoose.Schema({
     votedBy: [
         {
             userId: String,
-            vote: Number
+            vote: Number,
+            gender: String,
+            age: Number
         }
     ],
     utcDate: {
@@ -138,7 +140,7 @@ connector.addPost = function (post, userId) {
     newPost.save();
 };
 
-connector.addUserVote = function (userId, postId, vote, cont) {
+connector.addUserVote = function (userId, postId, vote, gender, age, cont) {
     console.log("Adding user vote: " + postId);
     if (vote == 1) {
         Post.findByIdAndUpdate(postId,
@@ -147,7 +149,9 @@ connector.addUserVote = function (userId, postId, vote, cont) {
                 $push: {
                     votedBy: {
                         userId: userId,
-                        vote: vote
+                        vote: vote,
+                        gender: gender,
+                        age: age
                     }
                 }
             },
@@ -168,7 +172,9 @@ connector.addUserVote = function (userId, postId, vote, cont) {
                 $push: {
                     votedBy: {
                         userId: userId,
-                        vote: vote
+                        vote: vote,
+                        gender: gender,
+                        age: age
                     }
                 }
             },

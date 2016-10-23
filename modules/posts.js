@@ -8,7 +8,7 @@ methods.getPosts = function (req, res) {
     var token = req.get('token');
     fb.getUserDetails(token, function (user) {
         var userId = user.providerId;
-        db.getPosts(userId, function(err, docs){
+        db.getPosts(userId, function (err, docs) {
             if (err) {
                 console.error(err);
             }
@@ -40,7 +40,7 @@ methods.addPost = function (req, res) {
     console.log("Add post recieved: " + req.get('title'));
     var token = req.get('token');
 
-    if(token == "NotMyPost"){
+    if (token == "NotMyPost") {
         var post = {};
         post.title = req.get('title');
         post.image1 = req.get('image1');
@@ -116,20 +116,35 @@ methods.vote = function (req, res) {
     var vote = req.get('selected');
     fb.getUserDetails(accessToken, function (user) {
             var userId = user.providerId;
-            db.addUserVote(userId, postId, vote, function(success){
-                if(!success){
+            var gender = user.gender;
+            var birthday = user.birthday;
+            var birthdayDate = parseDate(birthday)
+            var age = calculateAge(birthdayDate);
+
+            db.addUserVote(userId, postId, vote, gender, age, function (success) {
+                if (!success) {
                     console.log("Post not found!");
                     res.statusCode = 500;
                     return res.json({status: "Post Not Found"});
                 }
-                else{
+                else {
                     console.log("Vote accepted");
                     return res.json({status: "OK"});
-
                 }
             });
         }
     );
 };
+
+function calculateAge(birthday) { // birthday is a date
+    var ageDifMs = Date.now() - birthday.getTime();
+    var ageDate = new Date(ageDifMs); // miliseconds from epoch
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
+}
+
+function parseDate(dateString){
+    var parts = dateString.split('/');
+    return new Date(parts[2], parts[0], parts[1]);
+}
 
 module.exports = methods;
