@@ -44,11 +44,8 @@ methods.getPostStatistics = function (req, res) {
                 console.error(err);
             }
             else {
-                var postStatistics = {};
-                var maleVotes1 = 0;
-                var maleVotes2 = 0;
-                var femaleVotes1 = 0;
-                var femaleVotes2 = 0;
+                var postStatistics = generateStatisticsFromVotesArray(docs);
+
 
                 res.send(docs);
             }
@@ -165,6 +162,18 @@ function calculateAge(birthday) { // birthday is a date
 function parseDate(dateString){
     var parts = dateString.split('/');
     return new Date(parts[2], parts[0], parts[1]);
+}
+
+function generateStatisticsFromVotesArray(votesArray){
+    var postStatistics = {};
+    var maleVotes1 = 0;
+    var maleVotes2 = 0;
+    var femaleVotes1 = 0;
+    var femaleVotes2 = 0;
+    for(var index in votesArray){
+        console.log(index);
+        console.log(votesArray[index].age);
+    }
 }
 
 module.exports = methods;
