@@ -13,7 +13,6 @@ methods.getPosts = function (req, res) {
                 console.error(err);
             }
             else {
-                console.log(docs);
                 res.send(docs);
             }
         });
@@ -50,7 +49,7 @@ methods.getPostStatistics = function (req, res) {
                 var maleVotes2 = 0;
                 var femaleVotes1 = 0;
                 var femaleVotes2 = 0;
-                
+
                 res.send(docs);
             }
         })

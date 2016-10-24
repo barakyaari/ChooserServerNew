@@ -216,12 +216,10 @@ filterUserVotedPosts = function(userId, docs){
     for(var index in docs){
         var post = docs[index];
         console.log("Checking: " + post.title);
-        var votedBy = post.votedBy;
         for(var i = 0; i < post.votedBy.length; i++){
             var voter = post.votedBy[i];
             if(voter.userId == userId){
                 found = true;
-                console.log("Filtering: " + post.title);
                 break;
             }
         }
