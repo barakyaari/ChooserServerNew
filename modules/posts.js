@@ -36,6 +36,27 @@ methods.getMyPosts = function (req, res) {
     })
 };
 
+methods.getPostStatistics = function (req, res) {
+    var token = req.get('token');
+    fb.getUserDetails(token, function (user) {
+        var postId = req.get('postId');
+        db.getPostStatistics(postId, function (err, docs) {
+            if (err) {
+                console.error(err);
+            }
+            else {
+                var postStatistics = {};
+                var maleVotes1 = 0;
+                var maleVotes2 = 0;
+                var femaleVotes1 = 0;
+                var femaleVotes2 = 0;
+                
+                res.send(docs);
+            }
+        })
+    })
+};
+
 methods.addPost = function (req, res) {
     console.log("Add post recieved: " + req.get('title'));
     var token = req.get('token');

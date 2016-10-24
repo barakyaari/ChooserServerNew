@@ -50,6 +50,6 @@ connector.getUserDetails = function (token, cont) {
             cont(user);
         }
     });
-}
+};
 
 module.exports = connector;

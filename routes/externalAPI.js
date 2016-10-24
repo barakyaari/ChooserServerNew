@@ -6,6 +6,13 @@ var postFetcher = require('../modules/posts.js');
 var users = require('../modules/users');
 
 router.get(
+    '/',
+    function (req, res) {
+        res.send("Hello World!");
+    }
+);
+
+router.get(
     '/addPost',
     function (req, res) {
         postFetcher.addPost(req, res);
@@ -44,6 +51,13 @@ router.get(
     '/login',
     function (req, res) {
         users.login(req, res);
+    }
+);
+
+router.get(
+    '/getpoststatistics',
+    function (req, res) {
+        posts.getPostStatistics(req, res);
     }
 );
 

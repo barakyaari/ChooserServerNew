@@ -201,6 +201,14 @@ connector.getPosts = function (userId, cont) {
         })
 };
 
+connector.getPostStatistics = function (postId, cont) {
+    console.log("Getting posts, userId: " + postId);
+    Post.find({'_id' : postId}, 'votedBy',
+        function (err, docs) {
+            cont(err, docs[0].votedBy);
+        })
+};
+
 //TODO: Find a MongoDB way to filter this in the query itself.
 filterUserVotedPosts = function(userId, docs){
     var filteredPosts = [];
