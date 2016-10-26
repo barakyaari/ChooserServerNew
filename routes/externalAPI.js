@@ -55,7 +55,7 @@ router.get(
 );
 
 router.get(
-    '/getpoststatistics',
+    '/getstatistics',
     function (req, res) {
         posts.getPostStatistics(req, res);
     }

@@ -43,7 +43,10 @@ methods.getPostStatistics = function (req, res) {
                 console.error(err);
             }
             else {
-                res.send(docs);
+                var postStatistics = generateStatisticsFromVotesArray(docs);
+
+                res.set({ 'content-type': 'application/json; charset=utf-8' });
+                res.send(postStatistics);
             }
         })
     })
@@ -131,7 +134,7 @@ methods.vote = function (req, res) {
             var userId = user.providerId;
             var gender = user.gender;
             var birthday = user.birthday;
-            var birthdayDate = parseDate(birthday)
+            var birthdayDate = parseDate(birthday);
             var age = calculateAge(birthdayDate);
 
             db.addUserVote(userId, postId, vote, gender, age, function (success) {
@@ -155,9 +158,63 @@ function calculateAge(birthday) { // birthday is a date
     return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
 
-function parseDate(dateString){
+function parseDate(dateString) {
     var parts = dateString.split('/');
     return new Date(parts[2], parts[0], parts[1]);
+}
+
+function generateStatisticsFromVotesArray(votesArray) {
+    var maleVotes1 = 0;
+    var maleVotes2 = 0;
+    var femaleVotes1 = 0;
+    var femaleVotes2 = 0;
+    var maxAgeVotes1 = 0;
+    var maxAgeVotes2 = 0;
+    for (var index = 0; index < votesArray.length; index++) {
+        if (votesArray[index].vote == 1) {
+            if (votesArray[index].gender == "female") {
+                femaleVotes1++;
+            }
+            if (votesArray[index].gender == "male") {
+                maleVotes1++;
+            }
+            if (votesArray[index].age > maxAgeVotes1) {
+                maxAgeVotes1 = votesArray[index].age;
+            }
+        }
+        if (votesArray[index].vote == 2) {
+            if (votesArray[index].gender == "female") {
+                femaleVotes2++;
+            }
+            if (votesArray[index].gender == "male") {
+                maleVotes2++;
+            }
+            if (votesArray[index].age > maxAgeVotes2) {
+                maxAgeVotes2 = votesArray[index].age;
+            }
+        }
+    }
+
+    var ageVotes1 = new Array(maxAgeVotes1 + 1).fill(0);
+    var ageVotes2 = new Array(maxAgeVotes2 + 1).fill(0);
+
+    for (var index = 0; index < votesArray.length; index++) {
+        if (votesArray[index].vote == 1) {
+            ageVotes1[votesArray[index].age] = ageVotes1[votesArray[index].age] + 1;
+        }
+        else {
+            ageVotes2[votesArray[index].age] = ageVotes2[votesArray[index].age] + 1;
+        }
+    }
+    var postStatisticsJson = {};
+    postStatisticsJson["maleVotes1"] = maleVotes1;
+    postStatisticsJson["maleVotes2"] = maleVotes2;
+    postStatisticsJson["femaleVotes1"] = femaleVotes1;
+    postStatisticsJson["femaleVotes2"] = femaleVotes2;
+    postStatisticsJson["ageVotes1"] = ageVotes1;
+    postStatisticsJson["ageVotes2"] = ageVotes2;
+
+    return postStatisticsJson;
 }
 
 module.exports = methods;
