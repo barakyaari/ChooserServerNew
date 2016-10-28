@@ -191,6 +191,30 @@ connector.addUserVote = function (userId, postId, vote, gender, age, cont) {
     }
 };
 
+connector.report = function (userId, postId, gender, age, cont) {
+    console.log("Adding user Report: " + postId);
+        Post.findByIdAndUpdate(postId,
+            {
+                $push: {
+                    votedBy: {
+                        userId: userId,
+                        vote: 0,
+                        gender: gender,
+                        age: age
+                    }
+                }
+            },
+            function (err) {
+                if (err) {
+                    console.log("Post not found");
+                    cont(false);
+                }
+                else {
+                    cont(true);
+                }
+            });
+};
+
 connector.getPosts = function (userId, cont) {
     console.log("Getting posts, userId: " + userId);
     Post.find(

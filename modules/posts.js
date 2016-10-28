@@ -152,6 +152,31 @@ methods.vote = function (req, res) {
     );
 };
 
+methods.report = function (req, res) {
+    var accessToken = req.get('token');
+    var postId = req.get('postId');
+    fb.getUserDetails(accessToken, function (user) {
+            var userId = user.providerId;
+            var gender = user.gender;
+            var birthday = user.birthday;
+            var birthdayDate = parseDate(birthday);
+            var age = calculateAge(birthdayDate);
+
+            db.report(userId, postId, gender, age, function (success) {
+                if (!success) {
+                    console.log("Post not found!");
+                    res.statusCode = 500;
+                    return res.json({status: "Post Not Found"});
+                }
+                else {
+                    console.log("Report accepted");
+                    return res.json({status: "OK"});
+                }
+            });
+        }
+    );
+};
+
 function calculateAge(birthday) { // birthday is a date
     var ageDifMs = Date.now() - birthday.getTime();
     var ageDate = new Date(ageDifMs); // miliseconds from epoch

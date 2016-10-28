@@ -48,6 +48,13 @@ router.get(
 );
 
 router.get(
+    '/report',
+    function (req, res) {
+        posts.report(req, res);
+    }
+);
+
+router.get(
     '/login',
     function (req, res) {
         users.login(req, res);
