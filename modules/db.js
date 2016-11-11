@@ -1,3 +1,5 @@
+var consts = require('./consts.js')
+
 const mongoConnString = 'mongodb://chooser:Nsghvnjac1@ds059375.mlab.com:59375/chooserdb';
 // const url = 'localhost:27017';
 var fbconnector = require('./facebookconnector.js');
@@ -69,6 +71,9 @@ var postSchema = mongoose.Schema({
             age: Number
         }
     ],
+    push_factor: {
+        type: Number
+    },
     utcDate: {
         type: Date
     }
@@ -134,6 +139,7 @@ connector.addPost = function (post, userId) {
         votes1: post.votes1,
         votes2: post.votes2,
         votedBy: [],
+        push_factor: post.push_factor,
         utcDate: post.utcDate
     });
 
@@ -141,118 +147,66 @@ connector.addPost = function (post, userId) {
 };
 
 connector.addUserVote = function (userId, postId, vote, gender, age, cont) {
+    var callback = function (err) {
+        if (err) console.error(err);
+        return err;
+    };
+
+    var update_query = {};
+
+    if      (vote == 1) update_query["$inc"] = { votes1: 1};
+    else if (vote == 2) update_query["$inc"] = { votes2: 1};
+
+    update_query["$push"] = {
+        votedBy: {
+            userId: userId,
+            vote: vote,
+            gender: gender,
+            age: age
+        }
+    };
+
     console.log("Adding user vote: " + postId);
-    if (vote == 1) {
-        Post.findByIdAndUpdate(postId,
-            {
-                $inc: {votes1: 1},
-                $push: {
-                    votedBy: {
-                        userId: userId,
-                        vote: vote,
-                        gender: gender,
-                        age: age
-                    }
-                }
-            },
-            function (err) {
-                if (err) {
-                    console.log("Post not found");
-                    cont(false);
-                }
-                else {
-                    cont(true);
-                }
-            });
-    }
-    else if (vote == 2) {
-        Post.findByIdAndUpdate(postId,
-            {
-                $inc: {votes2: 1},
-                $push: {
-                    votedBy: {
-                        userId: userId,
-                        vote: vote,
-                        gender: gender,
-                        age: age
-                    }
-                }
-            },
-            function (err) {
-                if (err) {
-                    console.log("Post not found");
-                    cont(false);
-                }
-                else {
-                    cont(true);
-                }
-            }
-        );
-    }
+
+    var err = null;
+
+    err |= Post.findByIdAndUpdate(postId, update_query, callback);
+    err |= Post.update(
+        { _id: postId, push_factor: { $gt: 0 } },
+        { $inc: { push_factor: consts.push_factor.decrement } },
+        null,
+        callback);
+
+    cont(err);
 };
 
 connector.report = function (userId, postId, gender, age, cont) {
     console.log("Adding user Report: " + postId);
-        Post.findByIdAndUpdate(postId,
-            {
-                $push: {
-                    votedBy: {
-                        userId: userId,
-                        vote: 0,
-                        gender: gender,
-                        age: age
-                    }
-                }
-            },
-            function (err) {
-                if (err) {
-                    console.log("Post not found");
-                    cont(false);
-                }
-                else {
-                    cont(true);
-                }
-            });
+    connector.addUserVote(userId, postId, 0, gender, age, cont);
 };
 
 connector.getPosts = function (userId, cont) {
-    console.log("Getting posts, userId: " + userId);
-    Post.find(
-        {'userId': {$ne: userId }}
-        , function (err, docs) {
-            var filteredDocs = filterUserVotedPosts(userId, docs);
-            cont(err, filteredDocs);
-        })
+    console.log("Getting posts of " + userId);
+    Post.find({
+        userId: { $ne: userId },
+        votedBy: { $not: { $elemMatch: { userId: userId } } }
+    }, function (err, docs) {
+        cont(err, docs);
+    });
 };
 
 connector.getPostStatistics = function (postId, cont) {
     console.log("Getting posts, userId: " + postId);
-    Post.find({'_id' : postId}, 'votedBy',
+    Post.find({ '_id': postId }, 'votedBy',
         function (err, docs) {
-            cont(err, docs[0].votedBy);
-        })
-};
+            var votedBy = null;
+            if (docs.length > 0)
+                votedBy = docs[0].votedBy;
+            else
+                err = "Post not found!";
 
-//TODO: Find a MongoDB way to filter this in the query itself.
-filterUserVotedPosts = function(userId, docs){
-    var filteredPosts = [];
-    var found = false;
-    for(var index in docs){
-        var post = docs[index];
-        console.log("Checking: " + post.title);
-        for(var i = 0; i < post.votedBy.length; i++){
-            var voter = post.votedBy[i];
-            if(voter.userId == userId){
-                found = true;
-                break;
-            }
-        }
-        if(!found){
-            filteredPosts.push(post);
-        }
-        found = false;
-    }
-    return filteredPosts;
+            cont(err, votedBy);
+        });
 };
 
 module.exports = connector;

@@ -1,22 +1,53 @@
 var fb = require('./facebookconnector.js');
 var db = require('./db.js');
 var cloudinary = require('./cloudinaryConnector.js');
+var consts = require('./consts.js')
 
 var methods = {};
+
+function selectKPosts (k, posts) {
+    if (!posts || posts.length == 0)
+        return posts;
+
+    var selection_span = 0;
+    for (var post in posts)
+        selection_span += post.push_factor;
+
+    var selection;
+    var selected_posts = [];
+    for (var i = 0; i < k; i++) {
+        selection = Math.random() * selection_span;
+
+        // Will not reach out of array bounds, since selection will always reach 0
+        // before j reaches out of bounds, because selection <= sum of push_factors
+        for (var j = 0; selection > 0; j++)
+            selection -= posts[j].push_factor;
+
+        selection_span -= posts[j].push_factor;
+
+        // Put the selected post in the results list, and remove it from the array
+        selected_posts.push(posts[j]);
+        posts[j] = posts.pop();
+    }
+
+    return selected_posts;
+}
 
 methods.getPosts = function (req, res) {
     var token = req.get('token');
     fb.getUserDetails(token, function (user) {
         var userId = user.providerId;
-        db.getPosts(userId, function (err, docs) {
+
+        db.getPosts(userId, function (err, posts) {
             if (err) {
                 console.error(err);
+                res.status(500).send(err);
             }
-            else {
-                res.send(docs);
-            }
+
+            var selected_posts = selectKPosts(consts.posts_in_chunk, posts);
+            res.send(selected_posts);
         });
-    })
+    });
 };
 
 methods.getMyPosts = function (req, res) {
@@ -26,12 +57,11 @@ methods.getMyPosts = function (req, res) {
         db.Post.find({userId: userId}, function (err, docs) {
             if (err) {
                 console.error(err);
+                res.status(500).send(err);
             }
-            else {
-                res.send(docs);
-            }
-        })
-    })
+            res.send(docs);
+        });
+    });
 };
 
 methods.getPostStatistics = function (req, res) {
@@ -41,71 +71,48 @@ methods.getPostStatistics = function (req, res) {
         db.getPostStatistics(postId, function (err, docs) {
             if (err) {
                 console.error(err);
+                res.status(500).send(err);
             }
-            else {
-                var postStatistics = generateStatisticsFromVotesArray(docs);
 
-                res.set({ 'content-type': 'application/json; charset=utf-8' });
-                res.send(postStatistics);
-            }
-        })
-    })
+            var postStatistics = generateStatisticsFromVotesArray(docs);
+
+            res.set({ 'content-type': 'application/json; charset=utf-8' });
+            res.send(postStatistics);
+        });
+    });
 };
 
 methods.addPost = function (req, res) {
-    console.log("Add post recieved: " + req.get('title'));
+    console.log("Add post received: " + req.get('title'));
+
     var token = req.get('token');
+    var post = {
+        title: req.get('title'),
+        image1: req.get('image1'),
+        description1: req.get('description1'),
+        image2: req.get('image2'),
+        description2: req.get('description2'),
+        votes1: req.get('votes1'),
+        votes2: req.get('votes2'),
+        usersVotes: [],
+        utcDate: Date.now()
+    };
 
-    if (token == "NotMyPost") {
-        var post = {};
-        post.title = req.get('title');
-        post.image1 = req.get('image1');
-        post.description1 = req.get('description1');
-        post.image2 = req.get('image2');
-        post.description2 = req.get('description2');
-        post.votes1 = req.get('votes1');
-        post.votes2 = req.get('votes2');
-        post.usersVotes = [];
-        post.utcDate = Date.now();
-
+    var cont = function (providerId) {
         if (!post.title || !post.image1 || !post.image2) {
             console.log('add post request with missing parameters');
             res.send('add post failed!');
-        }
-        else {
-            db.addPost(post, "NotMyPost");
+        } else {
+            db.addPost(post, providerId);
             console.log("Post Added");
             return res.json({status: "OK"});
         }
-    }
+    };
 
-    else {
-
-        fb.getUserDetails(token, function (user) {
-            var token = req.get('token');
-            var post = {};
-            post.title = req.get('title');
-            post.image1 = req.get('image1');
-            post.description1 = req.get('description1');
-            post.image2 = req.get('image2');
-            post.description2 = req.get('description2');
-            post.votes1 = req.get('votes1');
-            post.votes2 = req.get('votes2');
-            post.usersVotes = [];
-            post.utcDate = Date.now();
-
-
-            if (!post.title || !post.image1 || !post.image2) {
-                console.log('add post request with missing parameters');
-                res.send('add post failed!');
-            }
-            else {
-                db.addPost(post, user.providerId);
-                console.log("Post Added");
-                return res.json({status: "OK"});
-            }
-        });
-    }
+    if (token == "NotMyPost")
+        cont(token);
+    else
+        fb.getUserDetails(token, function (user) { cont(user.providerId) });
 };
 
 methods.deletePost = function (req, res) {
@@ -137,8 +144,8 @@ methods.vote = function (req, res) {
             var birthdayDate = parseDate(birthday);
             var age = calculateAge(birthdayDate);
 
-            db.addUserVote(userId, postId, vote, gender, age, function (success) {
-                if (!success) {
+            db.addUserVote(userId, postId, vote, gender, age, function (err) {
+                if (err) {
                     console.log("Post not found!");
                     res.statusCode = 500;
                     return res.json({status: "Post Not Found"});
@@ -184,60 +191,43 @@ function calculateAge(birthday) { // birthday is a date
 }
 
 function parseDate(dateString) {
+    if (dateString == null)
+        return new Date();
+
     var parts = dateString.split('/');
     return new Date(parts[2], parts[0], parts[1]);
 }
 
-function generateStatisticsFromVotesArray(votesArray) {
-    var maleVotes1 = 0;
-    var maleVotes2 = 0;
-    var femaleVotes1 = 0;
-    var femaleVotes2 = 0;
-    var maxAgeVotes1 = 0;
-    var maxAgeVotes2 = 0;
-    for (var index = 0; index < votesArray.length; index++) {
-        if (votesArray[index].vote == 1) {
-            if (votesArray[index].gender == "female") {
-                femaleVotes1++;
-            }
-            if (votesArray[index].gender == "male") {
-                maleVotes1++;
-            }
-            if (votesArray[index].age > maxAgeVotes1) {
-                maxAgeVotes1 = votesArray[index].age;
-            }
+function generateStatisticsFromVotesArray(voters) {
+    var vote_proto = function () {
+        return {
+            male: 0,
+            female: 0,
+            maxAge: 0,
+            ageHistogram: null
         }
-        if (votesArray[index].vote == 2) {
-            if (votesArray[index].gender == "female") {
-                femaleVotes2++;
-            }
-            if (votesArray[index].gender == "male") {
-                maleVotes2++;
-            }
-            if (votesArray[index].age > maxAgeVotes2) {
-                maxAgeVotes2 = votesArray[index].age;
-            }
-        }
+    };
+    var votes = { 1: vote_proto(), 2: vote_proto() };
+
+    for (var i = 0; i < voters.length; i++) {
+        votes[voters[i].vote][voters[i].gender]++;
+        votes[voters[i].vote]["maxAge"] = Math.max(votes[voters[i].vote]["maxAge"], voters[i].age);
     }
 
-    var ageVotes1 = new Array(maxAgeVotes1 + 1).fill(0);
-    var ageVotes2 = new Array(maxAgeVotes2 + 1).fill(0);
+    votes[1]["ageHistogram"] = new Array(votes[1]["maxAge"] + 1).fill(0);
+    votes[2]["ageHistogram"] = new Array(votes[2]["maxAge"] + 1).fill(0);
 
-    for (var index = 0; index < votesArray.length; index++) {
-        if (votesArray[index].vote == 1) {
-            ageVotes1[votesArray[index].age] = ageVotes1[votesArray[index].age] + 1;
-        }
-        else {
-            ageVotes2[votesArray[index].age] = ageVotes2[votesArray[index].age] + 1;
-        }
-    }
+    for (var i = 0; i < voters.length; i++)
+        votes[voters[i].vote]["ageHistogram"][voters[i].age]++;
+
     var postStatisticsJson = {};
-    postStatisticsJson["maleVotes1"] = maleVotes1;
-    postStatisticsJson["maleVotes2"] = maleVotes2;
-    postStatisticsJson["femaleVotes1"] = femaleVotes1;
-    postStatisticsJson["femaleVotes2"] = femaleVotes2;
-    postStatisticsJson["ageVotes1"] = ageVotes1;
-    postStatisticsJson["ageVotes2"] = ageVotes2;
+
+    postStatisticsJson["maleVotes1"] = votes[1]["male"];
+    postStatisticsJson["maleVotes2"] = votes[2]["male"];
+    postStatisticsJson["femaleVotes1"] = votes[1]["female"];
+    postStatisticsJson["femaleVotes2"] = votes[2]["female"];
+    postStatisticsJson["ageVotes1"] = votes[1]["ageHistogram"];
+    postStatisticsJson["ageVotes2"] = votes[2]["ageHistogram"];
 
     return postStatisticsJson;
 }
