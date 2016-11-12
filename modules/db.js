@@ -35,6 +35,9 @@ var userSchema = mongoose.Schema({
     },
     email: {
         type: String
+    },
+    tokens: {
+        type: Number
     }
 });
 
@@ -80,9 +83,10 @@ var postSchema = mongoose.Schema({
 });
 
 var User = mongoose.model('User', userSchema);
+var Post = mongoose.model('Post', postSchema);
 
 var connector = {};
-
+connector.Post = Post;
 connector.User = User;
 
 connector.updateUser = function (token) {
@@ -122,10 +126,6 @@ connector.updateUser = function (token) {
         });
     });
 };
-
-var Post = mongoose.model('Post', postSchema);
-
-connector.Post = Post;
 
 connector.addPost = function (post, userId) {
 
@@ -176,6 +176,7 @@ connector.addUserVote = function (userId, postId, vote, gender, age, cont) {
         { $inc: { push_factor: consts.push_factor.decrement } },
         null,
         callback);
+    err |= User.update({ providerId: userId }, { $inc: { tokens: 1} }, null, callback);
 
     cont(err);
 };
@@ -207,6 +208,25 @@ connector.getPostStatistics = function (postId, cont) {
 
             cont(err, votedBy);
         });
+};
+
+connector.promotePost = function (postId, userId, succ, fail) {
+    var cost = consts.promotion_cost;
+    var push_factor_change = cost * consts.token_to_push_factor_ratio;
+    var tokens = User.findOne({ providerId: userId }, { tokens: 1 });
+
+    if (tokens < cost)
+        fail("Insufficient tokens");
+
+    cost *= -1;
+    User.update({ providerId: userId }, { $inc: { tokens: cost } }, function (err) {
+        if (err) fail(err.message);
+    });
+    Post.update({ _id: postId }, { $inc: { push_factor: push_factor_change } }, function (err) {
+        if (err) fail(err.message);
+    });
+
+    succ();
 };
 
 module.exports = connector;

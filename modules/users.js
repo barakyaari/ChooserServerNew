@@ -22,4 +22,20 @@ methods.login = function (req, res) {
     }
 };
 
+methods.getNumTokens = function (req, res) {
+    var token = req.get('token');
+
+    fb.getUserDetails(token, function (user) {
+        db.User.findOne({ providerId: user.providerId }, { tokens: 1 }, function (err, doc) {
+            if (err) {
+                console.error(err);
+                res.status(500).send(err);
+            }
+
+            console.log('User ' + user.providerId + ' has got ' + doc.tokens + ' tokens');
+            res.status(200).send(doc.tokens.toString());
+        });
+    });
+};
+
 module.exports = methods;

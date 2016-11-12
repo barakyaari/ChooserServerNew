@@ -20,6 +20,20 @@ router.get(
 );
 
 router.get(
+    '/getNumTokens',
+    function (req, res) {
+        users.getNumTokens(req, res);
+    }
+);
+
+router.get(
+    '/promotePost',
+    function (req, res) {
+        posts.promote(req, res);
+    }
+);
+
+router.get(
     '/deletePost',
     function (req, res) {
         postFetcher.deletePost(req, res);

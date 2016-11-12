@@ -30,11 +30,16 @@ function selectKPosts (k, posts) {
         posts[j] = posts.pop();
     }
 
+    selected_posts.sort(function (p1, p2) {
+        return p1.push_factor - p2.push_factor;
+    });
+
     return selected_posts;
 }
 
 methods.getPosts = function (req, res) {
     var token = req.get('token');
+
     fb.getUserDetails(token, function (user) {
         var userId = user.providerId;
 
@@ -52,13 +57,16 @@ methods.getPosts = function (req, res) {
 
 methods.getMyPosts = function (req, res) {
     var token = req.get('token');
+
     fb.getUserDetails(token, function (user) {
         var userId = user.providerId;
+
         db.Post.find({userId: userId}, function (err, docs) {
             if (err) {
                 console.error(err);
                 res.status(500).send(err);
             }
+
             res.send(docs);
         });
     });
@@ -95,6 +103,7 @@ methods.addPost = function (req, res) {
         votes1: req.get('votes1'),
         votes2: req.get('votes2'),
         usersVotes: [],
+        push_factor: consts.push_factor.default,
         utcDate: Date.now()
     };
 
@@ -182,6 +191,20 @@ methods.report = function (req, res) {
             });
         }
     );
+};
+
+methods.promote = function (req, res) {
+    var accessToken = req.get('token');
+    var postId = req.get('postId');
+
+    fb.getUserDetails(accessToken, function (user) {
+        db.promotePost(postId, user.providerId,
+            function () {
+                res.status(200).json({message: "OK"})
+            }, function (err) {
+                res.status(404).send({message: "Not Found"})
+            });
+    });
 };
 
 function calculateAge(birthday) { // birthday is a date

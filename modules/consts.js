@@ -7,7 +7,9 @@ const consts = {
         default: 100,
         decrement: -1
     },
-    posts_in_chunk: 10
+    posts_in_chunk: 10,
+    promotion_cost: 50,
+    token_to_push_factor_ratio: 2
 };
 
 module.exports = consts;
