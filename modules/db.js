@@ -127,7 +127,7 @@ connector.updateUser = function (token) {
     });
 };
 
-connector.addPost = function (post, userId) {
+connector.addPost = function (post, userId, cont) {
 
     var newPost = new Post({
         title: post.title,
@@ -143,7 +143,9 @@ connector.addPost = function (post, userId) {
         utcDate: post.utcDate
     });
 
-    newPost.save();
+    newPost.save(function(err, record){
+        cont(record._id);
+    });
 };
 
 connector.addUserVote = function (userId, postId, vote, gender, age, cont) {
