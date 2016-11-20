@@ -10,19 +10,21 @@ function selectKPosts (k, posts) {
         return posts;
 
     var selection_span = 0;
-    for (var post in posts)
+    posts.forEach(function (post) {
         selection_span += post.push_factor;
+    });
 
     var selection;
     var selected_posts = [];
-    for (var i = 0; i < k; i++) {
-        selection = Math.random() * selection_span;
+    for (var i = 0; i < k && selection_span > 0; i++) {
+        selection = parseInt(Math.random() * selection_span);
 
         // Will not reach out of array bounds, since selection will always reach 0
         // before j reaches out of bounds, because selection <= sum of push_factors
         for (var j = 0; selection > 0; j++)
             selection -= posts[j].push_factor;
 
+        j--;
         selection_span -= posts[j].push_factor;
 
         // Put the selected post in the results list, and remove it from the array
