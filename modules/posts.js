@@ -114,9 +114,13 @@ methods.addPost = function (req, res) {
             console.log('add post request with missing parameters');
             res.send('add post failed!');
         } else {
-            db.addPost(post, providerId);
+            db.addPost(post, providerId, function (id) {
+                console.log("Sent: "+id);
+                return res.status(200).send(id);
+
+            });
+
             console.log("Post Added");
-            return res.json({status: "OK"});
         }
     };
 
